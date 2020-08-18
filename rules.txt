@@ -1,0 +1,9 @@
+20 ]\s"(POST|GET)\s\/(.*)\.php(\s|\?)
+100 XDEBUG_SESSION_START
+100 call_user_func_array
+100 /solr/admin/
+100 MySQLAdmin
+100 phpMyAdmin
+100 myadmin
+100 eval-stdin.php
+100 die\(@md5
