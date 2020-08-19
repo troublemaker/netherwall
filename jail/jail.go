@@ -67,7 +67,6 @@ func BlockIP(ip string) error {
 		fmt.Println("BlockIP. IP not blocked (exists in whitelist): " + ip)
 		return nil
 	}
-	fmt.Printf("Blocking IP: %s \n", ip)
 	addIP(ip)
 	return nil
 }
@@ -78,13 +77,13 @@ func addIP(ip string) {
 		fmt.Printf("Adding IP to iptables failed: %v", err)
 		return
 	}
+	fmt.Println("JAILED:" + ip)
 	lock.Lock()
 	defer lock.Unlock()
 	ip_list[ip] = time.Now()
 }
 
 func removeByTimeout() {
-	fmt.Printf(".")
 	t := time.Now()
 	var elapsed time.Duration
 

@@ -49,7 +49,6 @@ func main() {
 					fmt.Printf("%d | "+line, watchlist[ip])
 					if watchlist[ip] >= config.BanThreshold {
 						jail.BlockIP(ip)
-						fmt.Println("JAILED:" + ip)
 					}
 
 				}
