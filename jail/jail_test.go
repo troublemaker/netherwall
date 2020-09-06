@@ -10,17 +10,16 @@ import (
 
 //override default periods
 func init() {
-	jailTime = time.Second
 	schedulerSleep = time.Millisecond * 100
 }
 
 func TestJail(t *testing.T) {
 	rand.Seed(time.Now().UnixNano())
 	AppendWhitelist("1.1.1.1")
-	BlockIP("1.1.1.1")
+	BlockIP("1.1.1.1", 100)
 	iter := 0
 	for iter < 4 {
-		BlockIP(randIpV4())
+		BlockIP(randIpV4(), 15)
 		time.Sleep(time.Millisecond * 150)
 		iter++
 	}
@@ -28,7 +27,7 @@ func TestJail(t *testing.T) {
 	if n != 4 {
 		t.Fatalf("expected 5 elements, got %d \n", n)
 	}
-	time.Sleep(time.Second * 2)
+	time.Sleep(time.Second * 5)
 
 	n = len(ip_list)
 	if n != 0 {
