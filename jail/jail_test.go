@@ -6,10 +6,42 @@ import (
 	"strings"
 	"testing"
 	"time"
+	"fmt"
 )
+
+
+type mockFireWall struct {
+	blockedIPs map[string]struct{}
+}
+
+func (mf *mockFireWall) AppendUnique(table, chain string, rulespec ...string) error {
+	fmt.Printf("IPTables (test):  Add IP: %s \n", rulespec[1])
+	mf.blockedIPs[rulespec[1]] = x
+	return nil
+}
+
+func (mf *mockFireWall) Delete(table, chain string, rulespec ...string) error {
+	fmt.Printf("IPTables (test):  Remove IP: %s \n", rulespec[1])
+	delete(mf.blockedIPs, rulespec[1])
+	fmt.Printf("IPTables (test):  blocked IPs list len: %d \n", len(mf.blockedIPs))
+	return nil
+}
+
+
+
+func newMockFireWall() *mockFireWall {
+	mf := new(mockFireWall)
+	mf.blockedIPs = make (map[string]struct{})
+	return mf
+}
+
+
+	
 
 //override default periods
 func init() {
+	ipt = newMockFireWall() 
+	Setup(ipt)
 	schedulerSleep = time.Millisecond * 100
 }
 
@@ -27,12 +59,15 @@ func TestJail(t *testing.T) {
 	if n != 4 {
 		t.Fatalf("expected 5 elements, got %d \n", n)
 	}
-	time.Sleep(time.Second * 5)
+	time.Sleep(time.Second * 3)
 
 	n = len(ip_list)
 	if n != 0 {
 		t.Fatalf("expected 0 elements, got %d \n", n)
 	}
+
+	//TODO: test # of rules in iptables
+	
 }
 
 func randIpV4() string {

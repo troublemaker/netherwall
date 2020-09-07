@@ -3,44 +3,38 @@ package jail
 import (
 	"errors"
 	"fmt"
-	"github.com/coreos/go-iptables/iptables"
 	"net"
 	"sync"
 	"time"
 )
 
+type iptablesImp interface {
+	AppendUnique(table, chain string, rulespec ...string) error 
+	Delete(table, chain string, rulespec ...string) error
+}
+
 var x struct{} //empty value
+var ipt iptablesImp
 
 var ip_list map[string]int
 var whitelist map[string]struct{}
 var lock = sync.RWMutex{}
 var schedulerSleep = time.Minute
-var ipt *iptables.IPTables
-var DecPerCycle = 1
+var decPerCycle = 1
+
 
 const chain string = "ipvoid"
 
 func init() {
-	var err error
 	ip_list = make(map[string]int, 1000)
 	whitelist = make(map[string]struct{}, 100)
 	whitelist["127.0.0.1"] = x
-
 	go scheduledRemoval()
-	ipt, err = iptables.New()
-	if err != nil {
-		fmt.Printf("IPtables init issue: %v", err)
-	}
 
-	err = ipt.ClearChain("filter", chain)
-	if err != nil {
-		fmt.Printf("IPtables clear chain issue: %v", err)
-	}
+}
 
-	err = ipt.AppendUnique("filter", "INPUT", "-j", chain)
-	if err != nil {
-		fmt.Printf("IPtables attach chain issue: %v", err)
-	}
+func Setup(iptimp iptablesImp){
+	ipt = iptimp
 }
 
 //TODO add CIDR support
@@ -78,7 +72,7 @@ func addIP(ip string, points int) {
 		fmt.Printf("Adding IP to iptables failed: %v", err)
 		return
 	}
-	fmt.Printf("JAILED: %s with %d points.", ip, points)
+	fmt.Printf("JAILED: %s with %d points. \n", ip, points)
 	lock.Lock()
 	defer lock.Unlock()
 	ip_list[ip] = points
@@ -89,7 +83,7 @@ func decreaseJailTime() {
 	defer lock.Unlock()
 
 	for k, v := range ip_list {
-		ip_list[k] = v - DecPerCycle
+		ip_list[k] = v - decPerCycle
 		fmt.Printf("Status: %s : %d \n", k, ip_list[k])
 
 		if ip_list[k] <= 0 {

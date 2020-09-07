@@ -11,6 +11,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"github.com/coreos/go-iptables/iptables"
 )
 
 type Configuration struct {
@@ -29,6 +30,7 @@ var config Configuration
 func main() {
 
 	initConfig()
+	initJail()
 
 	rIP, _ := regexp.Compile(config.IpRegEx) //IP regexp
 
@@ -78,6 +80,25 @@ func initConfig() {
 	config.Rules = make(map[*regexp.Regexp]int, 10) //init rules
 	readRules(config.RulesFile, config.Rules)       //read rules
 	readWhitelist(config.IPWhitelist)
+}
+
+
+func initJail(){
+	ipt, err := iptables.New()
+	if err != nil {
+		fmt.Printf("IPtables init issue: %v", err)
+	}
+
+	err = ipt.ClearChain("filter", chain)
+	if err != nil {
+		fmt.Printf("IPtables clear chain issue: %v", err)
+	}
+
+	err = ipt.AppendUnique("filter", "INPUT", "-j", chain)
+	if err != nil {
+		fmt.Printf("IPtables attach chain issue: %v", err)
+	}
+	jail.Setup(ipt)
 }
 
 func readWhitelist(path string) {
