@@ -53,7 +53,7 @@ func main() {
 				if r.MatchString(line) {
 					ip := rIP.FindString(line)
 					watchlist[ip] += float32(v)
-					fmt.Printf("%d | "+line, watchlist[ip])
+					fmt.Printf("%.2f | "+line, watchlist[ip])
 					if watchlist[ip] >= float32(config.BanThreshold) {
 						jail.BlockIP(ip, int(watchlist[ip]))
 					}
