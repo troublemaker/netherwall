@@ -17,18 +17,18 @@ type iptablesImp interface {
 var x struct{} //empty value
 var ipt iptablesImp
 
-var ip_list map[string]int
+var ip_list map[string]float32
 var whitelist map[string]struct{}
 var lock = sync.RWMutex{}
 var schedulerSleep = time.Minute
-var decJailedPerCycle = 1
+var decJailedPerCycle float32 = 1
 var chain = ""
 
 
 
 
 func init() {
-	ip_list = make(map[string]int, 1000)
+	ip_list = make(map[string]float32, 1000)
 	whitelist = make(map[string]struct{}, 100)
 	whitelist["127.0.0.1"] = x
 	go scheduledRemoval()
@@ -64,7 +64,7 @@ func AppendWhitelist(ip string) {
 	fmt.Println("IP added to whitelist: " + ip)
 }
 
-func BlockIP(ip string, points int) error {
+func BlockIP(ip string, points float32) error {
 
 	//todo IP4 only
 	res := net.ParseIP(ip)
@@ -82,13 +82,13 @@ func BlockIP(ip string, points int) error {
 	return nil
 }
 
-func addIP(ip string, points int) {
+func addIP(ip string, points float32) {
 	err := ipt.AppendUnique("filter", chain, "-s", ip, "-j", "DROP")
 	if err != nil {
 		fmt.Printf("Adding IP to iptables failed: %v", err)
 		return
 	}
-	fmt.Printf("JAILED: %s with %d points. \n", ip, points)
+	fmt.Printf("JAILED: %s with %.2f points. \n", ip, points)
 	lock.Lock()
 	defer lock.Unlock()
 	ip_list[ip] = points
@@ -100,7 +100,7 @@ func decreaseJailTime() {
 
 	for k, v := range ip_list {
 		ip_list[k] = v - decJailedPerCycle
-		fmt.Printf("IP Jail status: %s : %d \n", k, ip_list[k])
+		fmt.Printf("IP Jail status: %s : %.2f \n", k, ip_list[k])
 
 		if ip_list[k] <= 0 {
 			err := ipt.Delete("filter", chain, "-s", k, "-j", "DROP")

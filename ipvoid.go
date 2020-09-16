@@ -55,7 +55,7 @@ func main() {
 					watchlist[ip] += float32(v)
 					fmt.Printf("%.2f | "+line, watchlist[ip])
 					if watchlist[ip] >= float32(config.BanThreshold) {
-						jail.BlockIP(ip, int(watchlist[ip]))
+						jail.BlockIP(ip, watchlist[ip])
 					}
 
 				}
