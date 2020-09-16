@@ -12,8 +12,15 @@ import (
 	"strconv"
 	"strings"
 	"time"
+    "html/template"
+    "net/http"	
 	"github.com/coreos/go-iptables/iptables"
 )
+type StatPageData struct {
+    Watchlist map[string]float32
+    Jail map[string]float32
+}
+
 
 type Configuration struct {
 	LogFile      string
@@ -30,6 +37,8 @@ var config Configuration
 var decPerCycle float32 = 0.05
 const chain string = "ipvoid"
 
+
+//TODO clear Jail on shutdown
 func main() {
 
 	initConfig()
@@ -43,6 +52,8 @@ func main() {
 		fmt.Println(err.Error())
 		return
 	}
+
+	go webserver()
 
 	timer := time.NewTicker(time.Minute)
 
@@ -180,4 +191,16 @@ func readRules(path string, rules map[*regexp.Regexp]int) {
 			return
 		}
 	}
+}
+
+
+func webserver() {
+    tmpl := template.Must(template.ParseFiles("template/index.html"))
+    http.HandleFunc("/stats", func(w http.ResponseWriter, r *http.Request) {
+    	data := StatPageData{}
+    	data.Watchlist = watchlist
+    	data.Jail = jail.Ip_list
+    	tmpl.Execute(w, data)
+    })
+    http.ListenAndServe(":9900", nil)
 }

@@ -1,0 +1,96 @@
+
+<html lang="en-US">
+<style type="text/css">
+:root {
+    background-color: #38516b;
+    color: #EEEEEE;
+    font-family: "Courier New";
+    font-size: 14px;
+}
+ul {
+    list-style: none;
+}
+main {
+    display: flex;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    align-content: stretch;
+    align-items: stretch;
+    height: 100%;
+}
+
+.topwindow {
+    flex: 0 0 48%;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    max-height: 48%;
+}
+
+.bottomwindow {
+     flex: 0 0 48%;
+     border-color: white;
+     border-width: 1px;
+     border-style: solid;
+}
+
+.top {
+     flex: 1 0 0;
+     border-color: white;
+     border-width: 1px;
+     border-style: solid;
+     overflow-y: scroll;
+}
+.delimiter {
+     flex: 0 0 10px;
+}
+.footer {
+     flex: 0 0 15px;
+     text-align: right;
+     margin-top: 5px;
+}
+
+</style>
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+        <title>IP Void</title>
+    </head>
+    <body>
+        <main>
+
+                <div class="topwindow">
+                    <div class="top">
+                        <ul>
+                            {{ range $ip, $score := .Watchlist }}
+                                <li>{{$ip}} : {{$score }}</li>
+                            {{end}}
+                        </ul>
+                    </div>
+                    <div class="delimiter"></div>
+                    <div class="top">
+                        <ul>
+                            {{ range $ip, $score := .Watchlist }}
+                                <li>{{$ip}} : {{$score }}</li>
+                            {{end}}
+                        </ul>
+                    </div>
+                    <div class="delimiter"></div>
+                    <div class="top">
+                        3
+                    </div>                                        
+                </div>
+                <div class="delimiter"></div>
+                <div class="bottomwindow">
+                    x
+                </div>
+
+
+            <div class="footer">
+            // IP Void v.0.2 | 2020 //
+            </div>
+        </main>
+
+
+    </body>
+</html>

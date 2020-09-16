@@ -17,7 +17,7 @@ type iptablesImp interface {
 var x struct{} //empty value
 var ipt iptablesImp
 
-var ip_list map[string]float32
+var Ip_list map[string]float32
 var whitelist map[string]struct{}
 var lock = sync.RWMutex{}
 var schedulerSleep = time.Minute
@@ -28,7 +28,7 @@ var chain = ""
 
 
 func init() {
-	ip_list = make(map[string]float32, 1000)
+	Ip_list = make(map[string]float32, 1000)
 	whitelist = make(map[string]struct{}, 100)
 	whitelist["127.0.0.1"] = x
 	go scheduledRemoval()
@@ -91,23 +91,23 @@ func addIP(ip string, points float32) {
 	fmt.Printf("JAILED: %s with %.2f points. \n", ip, points)
 	lock.Lock()
 	defer lock.Unlock()
-	ip_list[ip] = points
+	Ip_list[ip] = points
 }
 
 func decreaseJailTime() {
 	lock.Lock()
 	defer lock.Unlock()
 
-	for k, v := range ip_list {
-		ip_list[k] = v - decJailedPerCycle
-		fmt.Printf("IP Jail status: %s : %.2f \n", k, ip_list[k])
+	for k, v := range Ip_list {
+		Ip_list[k] = v - decJailedPerCycle
+		fmt.Printf("IP Jail status: %s : %.2f \n", k, Ip_list[k])
 
-		if ip_list[k] <= 0 {
+		if Ip_list[k] <= 0 {
 			err := ipt.Delete("filter", chain, "-s", k, "-j", "DROP")
 			if err != nil {
 				fmt.Printf("Delete IP from iptables failed: %v", err)
 			}
-			delete(ip_list, k)
+			delete(Ip_list, k)
 			fmt.Printf("Removing IP: %s \n", k)
 		}
 	}
