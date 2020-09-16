@@ -11,6 +11,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"time"
 	"github.com/coreos/go-iptables/iptables"
 )
 
@@ -24,8 +25,10 @@ type Configuration struct {
 }
 
 var fm *filemonitor.FileMonitor
-var watchlist map[string]int
+var watchlist map[string]float32
 var config Configuration
+var decPerCycle float32 = 0.05
+const chain string = "ipvoid"
 
 func main() {
 
@@ -41,16 +44,18 @@ func main() {
 		return
 	}
 
+	timer := time.NewTimer(time.Minute)
+
 	for {
 		select {
 		case line := <-fc.Cout:
 			for r, v := range config.Rules {
 				if r.MatchString(line) {
 					ip := rIP.FindString(line)
-					watchlist[ip] += v
+					watchlist[ip] += float32(v)
 					fmt.Printf("%d | "+line, watchlist[ip])
-					if watchlist[ip] >= config.BanThreshold {
-						jail.BlockIP(ip)
+					if watchlist[ip] >= float32(config.BanThreshold) {
+						jail.BlockIP(ip, int(watchlist[ip]))
 					}
 
 				}
@@ -59,13 +64,24 @@ func main() {
 		case err := <-fc.Cerr:
 			fmt.Println(err)
 			return
+
+		case <-timer.C:
+			for k, v := range watchlist {
+				watchlist[k] = v - decPerCycle
+				fmt.Printf("Status: %s : %d \n", k, watchlist[k])
+
+				if watchlist[k] <= 0 {
+					delete(watchlist, k)
+					fmt.Printf("Removing IP: %s \n", k)
+				}
+			}
 		}
 	}
 
 }
 
 func initConfig() {
-	watchlist = make(map[string]int, 1000)
+	watchlist = make(map[string]float32, 1000)
 
 	//read config
 	conf, _ := os.Open("config.json")
@@ -74,6 +90,7 @@ func initConfig() {
 	err := decoder.Decode(&config)
 	if err != nil {
 		fmt.Println("config error:", err)
+		os.Exit(1)
 	}
 	fmt.Println(config)
 
@@ -87,18 +104,14 @@ func initJail(){
 	ipt, err := iptables.New()
 	if err != nil {
 		fmt.Printf("IPtables init issue: %v", err)
+		os.Exit(1)
 	}
 
-	err = ipt.ClearChain("filter", chain)
+	err = jail.Setup(ipt, chain)
 	if err != nil {
-		fmt.Printf("IPtables clear chain issue: %v", err)
+		fmt.Printf("IPtables setup issue: %v", err)
+		os.Exit(1)
 	}
-
-	err = ipt.AppendUnique("filter", "INPUT", "-j", chain)
-	if err != nil {
-		fmt.Printf("IPtables attach chain issue: %v", err)
-	}
-	jail.Setup(ipt)
 }
 
 func readWhitelist(path string) {

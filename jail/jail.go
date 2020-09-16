@@ -11,6 +11,7 @@ import (
 type iptablesImp interface {
 	AppendUnique(table, chain string, rulespec ...string) error 
 	Delete(table, chain string, rulespec ...string) error
+	ClearChain(table, chain string) error
 }
 
 var x struct{} //empty value
@@ -20,10 +21,11 @@ var ip_list map[string]int
 var whitelist map[string]struct{}
 var lock = sync.RWMutex{}
 var schedulerSleep = time.Minute
-var decPerCycle = 1
+var decJailedPerCycle = 1
+var chain = ""
 
 
-const chain string = "ipvoid"
+
 
 func init() {
 	ip_list = make(map[string]int, 1000)
@@ -33,8 +35,22 @@ func init() {
 
 }
 
-func Setup(iptimp iptablesImp){
+func Setup(iptimp iptablesImp, chainname string) error {
 	ipt = iptimp
+	chain = chainname
+
+	err := ipt.ClearChain("filter", chain)
+	if err != nil {
+		fmt.Printf("IPtables clear chain issue: %v", err)
+		return err
+	}
+
+	err = ipt.AppendUnique("filter", "INPUT", "-j", chain)
+	if err != nil {
+		fmt.Printf("IPtables attach chain issue: %v", err)
+		return err
+	}
+	return nil
 }
 
 //TODO add CIDR support
@@ -83,7 +99,7 @@ func decreaseJailTime() {
 	defer lock.Unlock()
 
 	for k, v := range ip_list {
-		ip_list[k] = v - decPerCycle
+		ip_list[k] = v - decJailedPerCycle
 		fmt.Printf("Status: %s : %d \n", k, ip_list[k])
 
 		if ip_list[k] <= 0 {

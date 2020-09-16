@@ -28,7 +28,6 @@ func (mf *mockFireWall) Delete(table, chain string, rulespec ...string) error {
 }
 
 
-
 func newMockFireWall() *mockFireWall {
 	mf := new(mockFireWall)
 	mf.blockedIPs = make (map[string]struct{})
@@ -67,7 +66,7 @@ func TestJail(t *testing.T) {
 	}
 
 	//TODO: test # of rules in iptables
-	
+
 }
 
 func randIpV4() string {
