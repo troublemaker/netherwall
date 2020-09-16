@@ -44,7 +44,7 @@ func main() {
 		return
 	}
 
-	timer := time.NewTimer(time.Minute)
+	timer := time.NewTicker(time.Minute)
 
 	for {
 		select {
@@ -68,7 +68,7 @@ func main() {
 		case <-timer.C:
 			for k, v := range watchlist {
 				watchlist[k] = v - decPerCycle
-				fmt.Printf("Status: %s : %d \n", k, watchlist[k])
+				fmt.Printf("IP Score status: %s : %.2f \n", k, watchlist[k])
 
 				if watchlist[k] <= 0 {
 					delete(watchlist, k)
