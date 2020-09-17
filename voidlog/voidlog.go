@@ -13,7 +13,7 @@ func init() {
 }
 
 func Log(format string, a ...interface{}) {
-	s := time.Now().Format(time.Stamp) + " : " + fmt.Sprintf(format, a)
+	s := time.Now().Format(time.Stamp) + " : " + fmt.Sprintf(format, a...)
 	fmt.Print(s)
 	LogHistory.Value = s
 	LogHistory = LogHistory.Next()
