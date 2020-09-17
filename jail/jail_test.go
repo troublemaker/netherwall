@@ -1,14 +1,13 @@
 package jail
 
 import (
+	"fmt"
 	"math/rand"
 	"strconv"
 	"strings"
 	"testing"
 	"time"
-	"fmt"
 )
-
 
 type mockFireWall struct {
 	blockedIPs map[string]struct{}
@@ -27,19 +26,15 @@ func (mf *mockFireWall) Delete(table, chain string, rulespec ...string) error {
 	return nil
 }
 
-
 func newMockFireWall() *mockFireWall {
 	mf := new(mockFireWall)
-	mf.blockedIPs = make (map[string]struct{})
+	mf.blockedIPs = make(map[string]struct{})
 	return mf
 }
 
-
-	
-
 //override default periods
 func init() {
-	ipt = newMockFireWall() 
+	ipt = newMockFireWall()
 	Setup(ipt)
 	schedulerSleep = time.Millisecond * 100
 }

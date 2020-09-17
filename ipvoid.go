@@ -4,35 +4,32 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
+	"github.com/coreos/go-iptables/iptables"
+	"html/template"
 	"io"
 	"ipvoid/filemonitor"
 	"ipvoid/jail"
 	"ipvoid/resolver"
+	"net/http"
 	"os"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
-    "html/template"
-    "net/http"	
-	"github.com/coreos/go-iptables/iptables"
-	"sort"
 )
 
 type StatPageData struct {
-    Watchlist []stat
-    Jaillist []stat
-    History []string
+	Watchlist []stat
+	Jaillist  []stat
+	History   []string
 }
 
 type stat struct {
-    IP   string
-    Score float32
-    Host string
+	IP    string
+	Score float32
+	Host  string
 }
-
-
-
 
 type Configuration struct {
 	LogFile      string
@@ -47,8 +44,8 @@ var fm *filemonitor.FileMonitor
 var watchlist map[string]float32
 var config Configuration
 var decPerCycle float32 = 0.05
-const chain string = "ipvoid"
 
+const chain string = "ipvoid"
 
 //TODO clear Jail on shutdown
 func main() {
@@ -123,8 +120,7 @@ func initConfig() {
 	readWhitelist(config.IPWhitelist)
 }
 
-
-func initJail(){
+func initJail() {
 	ipt, err := iptables.New()
 	if err != nil {
 		fmt.Printf("IPtables init issue: %v", err)
@@ -206,46 +202,46 @@ func readRules(path string, rules map[*regexp.Regexp]int) {
 	}
 }
 
-
 func webserver() {
-    tmpl := template.Must(template.ParseFiles("template/index.html"))
-    http.HandleFunc("/stats", func(w http.ResponseWriter, r *http.Request) {
-    	data := StatPageData{}
+	tmpl := template.Must(template.ParseFiles("template/index.html"))
+	http.HandleFunc("/stats", func(w http.ResponseWriter, r *http.Request) {
+		data := StatPageData{}
 
-	    var statWatch []stat
-	    var statJail []stat
-	    var stathistory []string
+		var statWatch []stat
+		var statJail []stat
+		var stathistory []string
 
-	    //sorting watch list 
-	    for k, v := range watchlist {
-	    	host, _ := resolver.Lookup(k)
-	        statWatch = append(statWatch, stat{k, v, host})
-	    }
+		//sorting watch list
+		for k, v := range watchlist {
+			host, _ := resolver.Lookup(k)
+			statWatch = append(statWatch, stat{k, v, host})
+		}
 
-	    sort.Slice(statWatch, func(i, j int) bool {
-	        return statWatch[i].Score > statWatch[j].Score
-	    })
-
-	    //sorting jail list
-	    for k, v := range jail.Ip_list {
-	    	host, _ := resolver.Lookup(k)
-	        statJail = append(statJail, stat{k, v, host})
-	    }
-
-	    sort.Slice(statJail, func(i, j int) bool {
-	        return statJail[i].Score > statJail[j].Score
-	    })
-
-	    //copy jail history data
-	    jail.JailHistory.Do(func(p interface{}) {
-			stathistory = append(stathistory, p.(string))
+		sort.Slice(statWatch, func(i, j int) bool {
+			return statWatch[i].Score > statWatch[j].Score
 		})
 
+		//sorting jail list
+		for k, v := range jail.Ip_list {
+			host, _ := resolver.Lookup(k)
+			statJail = append(statJail, stat{k, v, host})
+		}
 
-    	data.Watchlist = statWatch
-    	data.Jaillist = statJail
-    	data.History = stathistory
-    	tmpl.Execute(w, data)
-    })
-    http.ListenAndServe(":9900", nil)
+		sort.Slice(statJail, func(i, j int) bool {
+			return statJail[i].Score > statJail[j].Score
+		})
+
+		//copy jail history data
+		jail.JailHistory.Do(func(p interface{}) {
+			if p != nil {
+				stathistory = append(stathistory, p.(string))
+			}
+		})
+
+		data.Watchlist = statWatch
+		data.Jaillist = statJail
+		data.History = stathistory
+		tmpl.Execute(w, data)
+	})
+	http.ListenAndServe(":9900", nil)
 }

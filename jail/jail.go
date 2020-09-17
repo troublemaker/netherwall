@@ -1,16 +1,16 @@
 package jail
 
 import (
+	"container/ring"
 	"errors"
 	"fmt"
 	"net"
 	"sync"
 	"time"
-	"container/ring"
 )
 
 type iptablesImp interface {
-	AppendUnique(table, chain string, rulespec ...string) error 
+	AppendUnique(table, chain string, rulespec ...string) error
 	Delete(table, chain string, rulespec ...string) error
 	ClearChain(table, chain string) error
 }
@@ -25,8 +25,6 @@ var lock = sync.RWMutex{}
 var schedulerSleep = time.Minute
 var decJailedPerCycle float32 = 1
 var chain = ""
-
-
 
 func init() {
 	Ip_list = make(map[string]float32, 1024)
