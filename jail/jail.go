@@ -100,7 +100,7 @@ func decreaseJailTime() {
 
 	for k, v := range Ip_list {
 		Ip_list[k] = v - decJailedPerCycle
-		fmt.Printf("IP Jail status: %s : %.2f \n", k, Ip_list[k])
+		//fmt.Printf("IP Jail status: %s : %.2f \n", k, Ip_list[k])
 
 		if Ip_list[k] <= 0 {
 			err := ipt.Delete("filter", chain, "-s", k, "-j", "DROP")
