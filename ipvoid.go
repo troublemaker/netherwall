@@ -255,7 +255,7 @@ func webserver() {
 			}
 		})
 		//reverse log 
-		for i, j := 0, len(stathistory)-1; i < j; i, j = i+1, j-1 {
+		for i, j := 0, len(log)-1; i < j; i, j = i+1, j-1 {
 			log[i], log[j] = log[j], log[i]
 		}
 
