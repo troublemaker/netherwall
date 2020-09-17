@@ -5,7 +5,7 @@
     background-color: #38516b;
     color: #EEEEEE;
     font-family: "Courier New";
-    font-size: 14px;
+    font-size: 12px;
 }
 ul {
     list-style: none;
@@ -61,17 +61,17 @@ main {
 
                 <div class="topwindow">
                     <div class="top">
-                        <ul>
-                            {{ range $ip, $score := .Watchlist }}
-                                <li>{{$ip}} : {{$score }}</li>
+                        <ol>
+                            {{ range .Watchlist }}
+                                <li>{{.Score}} : {{.IP}} [{{.Host}}]</li>
                             {{end}}
-                        </ul>
+                        </ol>
                     </div>
                     <div class="delimiter"></div>
                     <div class="top">
                         <ul>
-                            {{ range $ip, $score := .Jail }}
-                                <li>{{$ip}} : {{$score }}</li>
+                            {{ range .Jaillist }}
+                                <li>{{.Score}} : {{.IP}} [{{.Host}}]</li>
                             {{end}}
                         </ul>
                     </div>

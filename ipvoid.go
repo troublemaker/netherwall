@@ -7,6 +7,7 @@ import (
 	"io"
 	"ipvoid/filemonitor"
 	"ipvoid/jail"
+	"ipvoid/resolver"
 	"os"
 	"regexp"
 	"strconv"
@@ -15,11 +16,21 @@ import (
     "html/template"
     "net/http"	
 	"github.com/coreos/go-iptables/iptables"
+	"sort"
 )
+
 type StatPageData struct {
-    Watchlist map[string]float32
-    Jail map[string]float32
+    Watchlist []stat
+    Jaillist []stat
 }
+
+type stat struct {
+    IP   string
+    Score float32
+    Host string
+}
+
+
 
 
 type Configuration struct {
@@ -65,6 +76,7 @@ func main() {
 					ip := rIP.FindString(line)
 					watchlist[ip] += float32(v)
 					fmt.Printf("%.2f | "+line, watchlist[ip])
+					resolver.Lookup(ip)
 					if watchlist[ip] >= float32(config.BanThreshold) {
 						jail.BlockIP(ip, watchlist[ip])
 					}
@@ -79,7 +91,7 @@ func main() {
 		case <-timer.C:
 			for k, v := range watchlist {
 				watchlist[k] = v - decPerCycle
-				fmt.Printf("IP Score status: %s : %.2f \n", k, watchlist[k])
+				//fmt.Printf("IP Score status: %s : %.2f \n", k, watchlist[k])
 
 				if watchlist[k] <= 0 {
 					delete(watchlist, k)
@@ -198,8 +210,33 @@ func webserver() {
     tmpl := template.Must(template.ParseFiles("template/index.html"))
     http.HandleFunc("/stats", func(w http.ResponseWriter, r *http.Request) {
     	data := StatPageData{}
-    	data.Watchlist = watchlist
-    	data.Jail = jail.Ip_list
+
+	    var statWatch []stat
+	    var statJail []stat
+
+	    //sorting watch list 
+	    for k, v := range watchlist {
+	    	host, _ := resolver.Lookup(k)
+	        statWatch = append(statWatch, stat{k, v, host})
+	    }
+
+	    sort.Slice(statWatch, func(i, j int) bool {
+	        return statWatch[i].Score > statWatch[j].Score
+	    })
+
+	    //sorting jail list
+	    for k, v := range jail.Ip_list {
+	    	host, _ := resolver.Lookup(k)
+	        statJail = append(statJail, stat{k, v, host})
+	    }
+
+	    sort.Slice(statJail, func(i, j int) bool {
+	        return statJail[i].Score > statJail[j].Score
+	    })
+
+
+    	data.Watchlist = statWatch
+    	data.Jaillist = statJail
     	tmpl.Execute(w, data)
     })
     http.ListenAndServe(":9900", nil)
