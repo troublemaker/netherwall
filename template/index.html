@@ -32,11 +32,10 @@ main {
      border-color: white;
      border-width: 1px;
      border-style: solid;
-     max-height: 48%;
+     max-height: 47%;
      overflow: auto;
      white-space: nowrap;
      padding: 10;
-     padding-top: 0;
 }
 
 .top {
@@ -62,6 +61,7 @@ main {
     margin-left: 15px;
     font-weight: bold;
 }
+
 
 </style>
     <head>
@@ -102,11 +102,9 @@ main {
                 </div>
                 <div class="delimiter"></div>
                 <div class="bottomwindow">
-                    <ul>
                         {{ range $i, $v := .Log }}
-                            <li>{{$v}}</li>
+                            {{$v}}<br>
                         {{end}}
-                    </ul>
                 </div>
 
 
