@@ -22,6 +22,7 @@ import (
 type StatPageData struct {
     Watchlist []stat
     Jaillist []stat
+    History []string
 }
 
 type stat struct {
@@ -213,6 +214,7 @@ func webserver() {
 
 	    var statWatch []stat
 	    var statJail []stat
+	    var stathistory []string
 
 	    //sorting watch list 
 	    for k, v := range watchlist {
@@ -234,9 +236,15 @@ func webserver() {
 	        return statJail[i].Score > statJail[j].Score
 	    })
 
+	    //copy jail history data
+	    jail.JailHistory.Do(func(p interface{}) {
+			stathistory = append(stathistory, p.(string))
+		})
+
 
     	data.Watchlist = statWatch
     	data.Jaillist = statJail
+    	data.History = stathistory
     	tmpl.Execute(w, data)
     })
     http.ListenAndServe(":9900", nil)

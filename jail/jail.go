@@ -6,6 +6,7 @@ import (
 	"net"
 	"sync"
 	"time"
+	"container/ring"
 )
 
 type iptablesImp interface {
@@ -18,6 +19,7 @@ var x struct{} //empty value
 var ipt iptablesImp
 
 var Ip_list map[string]float32
+var JailHistory *ring.Ring
 var whitelist map[string]struct{}
 var lock = sync.RWMutex{}
 var schedulerSleep = time.Minute
@@ -26,9 +28,9 @@ var chain = ""
 
 
 
-
 func init() {
-	Ip_list = make(map[string]float32, 1000)
+	Ip_list = make(map[string]float32, 1024)
+	JailHistory = ring.New(1024)
 	whitelist = make(map[string]struct{}, 100)
 	whitelist["127.0.0.1"] = x
 	go scheduledRemoval()
@@ -89,6 +91,10 @@ func addIP(ip string, points float32) {
 		return
 	}
 	fmt.Printf("JAILED: %s with %.2f points. \n", ip, points)
+	//add to history
+	JailHistory.Value = time.Now().Format(time.Stamp) + " : " + ip
+	JailHistory = JailHistory.Next()
+
 	lock.Lock()
 	defer lock.Unlock()
 	Ip_list[ip] = points

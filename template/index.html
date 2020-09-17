@@ -79,7 +79,11 @@ main {
                     </div>
                     <div class="delimiter"></div>
                     <div class="top">
-                        3
+                        <ul>
+                            {{ range $i, $v := .History }}
+                                <li>{{$v}}</li>
+                            {{end}}
+                        </ul>
                     </div>                                        
                 </div>
                 <div class="delimiter"></div>
