@@ -10,6 +10,7 @@ import (
 	"ipvoid/filemonitor"
 	"ipvoid/jail"
 	"ipvoid/resolver"
+	"ipvoid/voidlog"
 	"net/http"
 	"os"
 	"regexp"
@@ -23,6 +24,7 @@ type StatPageData struct {
 	Watchlist []stat
 	Jaillist  []stat
 	History   []string
+	Log 	  []string
 }
 
 type stat struct {
@@ -73,7 +75,8 @@ func main() {
 				if r.MatchString(line) {
 					ip := rIP.FindString(line)
 					watchlist[ip] += float32(v)
-					fmt.Printf("%.2f | "+line, watchlist[ip])
+					//fmt.Printf("%.2f | " + line, watchlist[ip])
+					voidlog.Log("%.2f | " + line, watchlist[ip])
 					resolver.Lookup(ip)
 					if watchlist[ip] >= float32(config.BanThreshold) {
 						jail.BlockIP(ip, watchlist[ip])
@@ -83,7 +86,8 @@ func main() {
 			}
 
 		case err := <-fc.Cerr:
-			fmt.Println(err)
+			//fmt.Println(err)
+			voidlog.Log(err)
 			return
 
 		case <-timer.C:
@@ -93,7 +97,8 @@ func main() {
 
 				if watchlist[k] <= 0 {
 					delete(watchlist, k)
-					fmt.Printf("Removing IP: %s \n", k)
+					//fmt.Printf("Removing IP: %s \n", k)
+					voidlog.Log("Removing IP: %s \n", k)
 				}
 			}
 		}
@@ -210,6 +215,7 @@ func webserver() {
 		var statWatch []stat
 		var statJail []stat
 		var stathistory []string
+		var log []string
 
 		//sorting watch list
 		for k, v := range watchlist {
@@ -237,10 +243,26 @@ func webserver() {
 				stathistory = append(stathistory, p.(string))
 			}
 		})
+		//reverse history 
+		for i, j := 0, len(stathistory)-1; i < j; i, j = i+1, j-1 {
+			stathistory[i], stathistory[j] = stathistory[j], stathistory[i]
+		}
+
+		//copy log data
+		voidlog.LogHistory.Do(func(p interface{}) {
+			if p != nil {
+				log = append(log, p.(string))
+			}
+		})
+		//reverse log 
+		for i, j := 0, len(stathistory)-1; i < j; i, j = i+1, j-1 {
+			log[i], log[j] = log[j], log[i]
+		}
 
 		data.Watchlist = statWatch
 		data.Jaillist = statJail
 		data.History = stathistory
+		data.Log = log
 		tmpl.Execute(w, data)
 	})
 	http.ListenAndServe(":9900", nil)

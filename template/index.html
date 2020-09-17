@@ -52,6 +52,12 @@ main {
      margin-top: 5px;
 }
 
+.title {
+    font-size: 14px;
+    margin-left: 15px;
+    font-weight: bold;
+}
+
 </style>
     <head>
         <meta charset="utf-8">
@@ -63,6 +69,7 @@ main {
 
                 <div class="topwindow">
                     <div class="top">
+                        <p class="title">Watch list</p>
                         <ol>
                             {{ range .Watchlist }}
                                 <li>{{printf "%.2f" .Score}} : {{.IP}} [{{.Host}}]</li>
@@ -71,6 +78,7 @@ main {
                     </div>
                     <div class="delimiter"></div>
                     <div class="top">
+                        <p class="title">Jailed</p>
                         <ol>
                             {{ range .Jaillist }}
                                 <li>{{printf "%.2f" .Score}} : {{.IP}} [{{.Host}}]</li>
@@ -79,6 +87,7 @@ main {
                     </div>
                     <div class="delimiter"></div>
                     <div class="top">
+                        <p class="title">Jail history</p>
                         <ul>
                             {{ range $i, $v := .History }}
                                 <li>{{$v}}</li>
@@ -88,12 +97,16 @@ main {
                 </div>
                 <div class="delimiter"></div>
                 <div class="bottomwindow">
-                    x
+                    <ul>
+                        {{ range $i, $v := .Log }}
+                            <li>{{$v}}</li>
+                        {{end}}
+                    </ul>
                 </div>
 
 
             <div class="footer">
-            // IP Void v.0.2 //
+            // IP Void v.0.3 //
             </div>
         </main>
 

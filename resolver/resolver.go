@@ -5,6 +5,7 @@ import (
 	"strings"
 )
 
+// TODO cache TTL
 var res_cache map[string]string
 
 func init() {

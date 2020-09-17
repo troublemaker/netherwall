@@ -7,6 +7,7 @@ import (
 	"net"
 	"sync"
 	"time"
+	"ipvoid/voidlog"
 )
 
 type iptablesImp interface {
@@ -61,7 +62,9 @@ func AppendWhitelist(ip string) {
 		return
 	}
 	whitelist[ip] = x
-	fmt.Println("IP added to whitelist: " + ip)
+	//fmt.Println("IP added to whitelist: " + ip)
+	voidlog.Log("IP added to whitelist: " + ip)
+
 }
 
 func BlockIP(ip string, points float32) error {
@@ -75,7 +78,8 @@ func BlockIP(ip string, points float32) error {
 	//check whitelist
 	_, ok := whitelist[ip]
 	if ok {
-		fmt.Println("BlockIP. IP not blocked (exists in whitelist): " + ip)
+		//fmt.Println("BlockIP. IP not blocked (exists in whitelist): " + ip)
+		voidlog.Log("BlockIP. IP not blocked (exists in whitelist): " + ip)
 		return nil
 	}
 	addIP(ip, points)
@@ -85,10 +89,12 @@ func BlockIP(ip string, points float32) error {
 func addIP(ip string, points float32) {
 	err := ipt.AppendUnique("filter", chain, "-s", ip, "-j", "DROP")
 	if err != nil {
-		fmt.Printf("Adding IP to iptables failed: %v", err)
+		//fmt.Printf("Adding IP to iptables failed: %v", err)
+		voidlog.Log("Adding IP to iptables failed: %v", err)
 		return
 	}
-	fmt.Printf("JAILED: %s with %.2f points. \n", ip, points)
+	//fmt.Printf("JAILED: %s with %.2f points. \n", ip, points)
+	voidlog.Log("JAILED: %s with %.2f points. \n", ip, points)
 	//add to history
 	JailHistory.Value = time.Now().Format(time.Stamp) + " : " + ip
 	JailHistory = JailHistory.Next()
@@ -109,10 +115,12 @@ func decreaseJailTime() {
 		if Ip_list[k] <= 0 {
 			err := ipt.Delete("filter", chain, "-s", k, "-j", "DROP")
 			if err != nil {
-				fmt.Printf("Delete IP from iptables failed: %v", err)
+				//fmt.Printf("Delete IP from iptables failed: %v", err)
+				voidlog.Log("Delete IP from iptables failed: %v", err)
 			}
 			delete(Ip_list, k)
-			fmt.Printf("Removing IP: %s \n", k)
+			//fmt.Printf("Removing IP: %s \n", k)
+			voidlog.Log("Delete IP from iptables failed: %v", err)
 		}
 	}
 
