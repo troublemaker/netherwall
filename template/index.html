@@ -40,6 +40,8 @@ main {
      border-width: 1px;
      border-style: solid;
      overflow-y: scroll;
+     overflow-x: auto;
+     white-space: nowrap;
 }
 .delimiter {
      flex: 0 0 10px;
@@ -63,17 +65,17 @@ main {
                     <div class="top">
                         <ol>
                             {{ range .Watchlist }}
-                                <li>{{.Score}} : {{.IP}} [{{.Host}}]</li>
+                                <li>{{printf "%.2f" .Score}} : {{.IP}} [{{.Host}}]</li>
                             {{end}}
                         </ol>
                     </div>
                     <div class="delimiter"></div>
                     <div class="top">
-                        <ul>
+                        <ol>
                             {{ range .Jaillist }}
-                                <li>{{.Score}} : {{.IP}} [{{.Host}}]</li>
+                                <li>{{printf "%.2f" .Score}} : {{.IP}} [{{.Host}}]</li>
                             {{end}}
-                        </ul>
+                        </ol>
                     </div>
                     <div class="delimiter"></div>
                     <div class="top">
