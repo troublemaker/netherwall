@@ -24,7 +24,7 @@ type StatPageData struct {
 	Watchlist []stat
 	Jaillist  []stat
 	History   []string
-	Log 	  []string
+	Log       []string
 }
 
 type stat struct {
@@ -76,7 +76,7 @@ func main() {
 					ip := rIP.FindString(line)
 					watchlist[ip] += float32(v)
 					//fmt.Printf("%.2f | " + line, watchlist[ip])
-					voidlog.Log("%.2f | " + line, watchlist[ip])
+					voidlog.Log("%.2f | "+line, watchlist[ip])
 					resolver.Lookup(ip)
 					if watchlist[ip] >= float32(config.BanThreshold) {
 						jail.BlockIP(ip, watchlist[ip])
@@ -243,7 +243,7 @@ func webserver() {
 				stathistory = append(stathistory, p.(string))
 			}
 		})
-		//reverse history 
+		//reverse history
 		for i, j := 0, len(stathistory)-1; i < j; i, j = i+1, j-1 {
 			stathistory[i], stathistory[j] = stathistory[j], stathistory[i]
 		}
@@ -254,7 +254,7 @@ func webserver() {
 				log = append(log, p.(string))
 			}
 		})
-		//reverse log 
+		//reverse log
 		for i, j := 0, len(log)-1; i < j; i, j = i+1, j-1 {
 			log[i], log[j] = log[j], log[i]
 		}

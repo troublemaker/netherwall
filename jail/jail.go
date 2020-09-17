@@ -4,10 +4,10 @@ import (
 	"container/ring"
 	"errors"
 	"fmt"
+	"ipvoid/voidlog"
 	"net"
 	"sync"
 	"time"
-	"ipvoid/voidlog"
 )
 
 type iptablesImp interface {
@@ -20,6 +20,7 @@ var x struct{} //empty value
 var ipt iptablesImp
 
 var Ip_list map[string]float32
+var RepeatViolations map[string]int
 var JailHistory *ring.Ring
 var whitelist map[string]struct{}
 var lock = sync.RWMutex{}
@@ -29,6 +30,7 @@ var chain = ""
 
 func init() {
 	Ip_list = make(map[string]float32, 1024)
+	RepeatViolations = make(map[string]int, 1024)
 	JailHistory = ring.New(1024)
 	whitelist = make(map[string]struct{}, 100)
 	whitelist["127.0.0.1"] = x
@@ -62,7 +64,6 @@ func AppendWhitelist(ip string) {
 		return
 	}
 	whitelist[ip] = x
-	//fmt.Println("IP added to whitelist: " + ip)
 	voidlog.Log("IP added to whitelist: " + ip)
 
 }
@@ -78,7 +79,6 @@ func BlockIP(ip string, points float32) error {
 	//check whitelist
 	_, ok := whitelist[ip]
 	if ok {
-		//fmt.Println("BlockIP. IP not blocked (exists in whitelist): " + ip)
 		voidlog.Log("BlockIP. IP not blocked (exists in whitelist): " + ip)
 		return nil
 	}
@@ -89,12 +89,20 @@ func BlockIP(ip string, points float32) error {
 func addIP(ip string, points float32) {
 	err := ipt.AppendUnique("filter", chain, "-s", ip, "-j", "DROP")
 	if err != nil {
-		//fmt.Printf("Adding IP to iptables failed: %v", err)
 		voidlog.Log("Adding IP to iptables failed: %v", err)
 		return
 	}
-	//fmt.Printf("JAILED: %s with %.2f points. \n", ip, points)
-	voidlog.Log("JAILED: %s with %.2f points. \n", ip, points)
+
+	_, ok := RepeatViolations[ip]
+	if !ok {
+		voidlog.Log("JAILED: %s with %.2f points. \n", ip, points)
+		RepeatViolations[ip] = 1
+	} else {
+		RepeatViolations[ip]++
+		points = points * float32(RepeatViolations[ip])
+		voidlog.Log("JAILED: %s with %.2f points. Repeated Violation: x%d multiplier \n", ip, points, RepeatViolations[ip])
+	}
+
 	//add to history
 	JailHistory.Value = time.Now().Format(time.Stamp) + " : " + ip
 	JailHistory = JailHistory.Next()
@@ -110,17 +118,14 @@ func decreaseJailTime() {
 
 	for k, v := range Ip_list {
 		Ip_list[k] = v - decJailedPerCycle
-		//fmt.Printf("IP Jail status: %s : %.2f \n", k, Ip_list[k])
 
 		if Ip_list[k] <= 0 {
 			err := ipt.Delete("filter", chain, "-s", k, "-j", "DROP")
 			if err != nil {
-				//fmt.Printf("Delete IP from iptables failed: %v", err)
 				voidlog.Log("Delete IP from iptables failed: %v", err)
 			}
 			delete(Ip_list, k)
-			//fmt.Printf("Removing IP: %s \n", k)
-			voidlog.Log("Delete IP from iptables failed: %v", err)
+			voidlog.Log("Removing IP: %s \n", k)
 		}
 	}
 

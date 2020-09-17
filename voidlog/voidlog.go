@@ -1,9 +1,9 @@
 package voidlog
 
 import (
+	"container/ring"
 	"fmt"
 	"time"
-	"container/ring"
 )
 
 var LogHistory *ring.Ring
@@ -18,4 +18,3 @@ func Log(format string, a ...interface{}) {
 	LogHistory.Value = s
 	LogHistory = LogHistory.Next()
 }
-
