@@ -3,7 +3,9 @@ package main
 import (
 	"bufio"
 	"encoding/json"
+	"encoding/gob"
 	"fmt"
+	"log"
 	"github.com/coreos/go-iptables/iptables"
 	"html/template"
 	"io"
@@ -13,10 +15,12 @@ import (
 	"ipvoid/voidlog"
 	"net/http"
 	"os"
+	"os/signal"
 	"regexp"
 	"sort"
 	"strconv"
 	"strings"
+	"syscall"
 	"time"
 )
 
@@ -48,6 +52,7 @@ var config Configuration
 var decPerCycle float32 = 0.05
 
 const chain string = "ipvoid"
+const statedir string = "state"
 
 //TODO clear Jail on shutdown
 func main() {
@@ -64,7 +69,11 @@ func main() {
 		return
 	}
 
+
+
 	go webserver()
+	terminate := make(chan os.Signal, 1)
+	signal.Notify(terminate, syscall.SIGTERM, syscall.SIGINT, syscall.SIGQUIT)
 
 	timer := time.NewTicker(time.Minute)
 
@@ -101,6 +110,11 @@ func main() {
 					voidlog.Log("Removing IP: %s \n", k)
 				}
 			}
+		case <-terminate:
+			log.Println("Shutting down")
+			onShutDown()
+			os.Exit(0)
+
 		}
 	}
 
@@ -219,7 +233,7 @@ func webserver() {
 
 		//sorting watch list
 		for k, v := range watchlist {
-			host, _ := resolver.Lookup(k)
+			host := resolver.Lookup(k)
 			statWatch = append(statWatch, stat{k, v, host})
 		}
 
@@ -229,7 +243,7 @@ func webserver() {
 
 		//sorting jail list
 		for k, v := range jail.Ip_list {
-			host, _ := resolver.Lookup(k)
+			host := resolver.Lookup(k)
 			statJail = append(statJail, stat{k, v, host})
 		}
 
@@ -266,4 +280,22 @@ func webserver() {
 		tmpl.Execute(w, data)
 	})
 	http.ListenAndServe(":9900", nil)
+}
+
+
+
+func onShutDown() {
+	if _, err := os.Stat(statedir); os.IsNotExist(err) {
+		os.MkdirAll(statedir, 0755)
+	}
+	return 
+
+	file, err := os.Create("watchlist")
+	if err != nil {
+		log.Println("Couldn't save state: File create failed. " + err.Error())
+		return
+	}
+	encoder := gob.NewEncoder(file)
+	encoder.Encode(watchlist)
+	file.Close()
 }

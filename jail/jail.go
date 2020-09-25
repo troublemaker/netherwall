@@ -23,6 +23,8 @@ var Ip_list map[string]float32
 var RepeatViolations map[string]int
 var JailHistory *ring.Ring
 var whitelist map[string]struct{}
+var jailTimes map[string]time.Time
+
 var lock = sync.RWMutex{}
 var schedulerSleep = time.Minute
 var decJailedPerCycle float32 = 1
@@ -33,6 +35,8 @@ func init() {
 	RepeatViolations = make(map[string]int, 1024)
 	JailHistory = ring.New(1024)
 	whitelist = make(map[string]struct{}, 100)
+	jailTimes = make(map[string]time.Time, 1024)
+
 	whitelist["127.0.0.1"] = x
 	go scheduledRemoval()
 
@@ -87,29 +91,43 @@ func BlockIP(ip string, points float32) error {
 }
 
 func addIP(ip string, points float32) {
-	err := ipt.AppendUnique("filter", chain, "-s", ip, "-j", "DROP")
-	if err != nil {
-		voidlog.Log("Adding IP to iptables failed: %v", err)
-		return
-	}
+	//test if IP was just added.  This can happen when several matching entries 
+	//were added in the watched file at the same time. 
 
-	_, ok := RepeatViolations[ip]
-	if !ok {
-		voidlog.Log("JAILED: %s with %.2f points. \n", ip, points)
-		RepeatViolations[ip] = 1
+	t,ok := jailTimes[ip]
+	if !(ok && time.Now().Sub(t).Seconds() > 10) {
+
+		//wasn't recently added
+		err := ipt.AppendUnique("filter", chain, "-s", ip, "-j", "DROP")
+		if err != nil {
+			voidlog.Log("Adding IP to iptables failed: %v", err)
+			return
+		}
+
+		_, ok := RepeatViolations[ip]
+		if !ok {
+			voidlog.Log("JAILED: %s with %.2f points. \n", ip, points)
+			RepeatViolations[ip] = 1
+		} else {
+			RepeatViolations[ip]++
+			points = points * float32(RepeatViolations[ip])
+			voidlog.Log("JAILED: %s with %.2f points. Repeated Violation: x%d multiplier \n", ip, points, RepeatViolations[ip])
+		}
+
+		//add to history
+		JailHistory.Value = time.Now().Format(time.Stamp) + " : " + ip
+		JailHistory = JailHistory.Next()
 	} else {
-		RepeatViolations[ip]++
-		points = points * float32(RepeatViolations[ip])
-		voidlog.Log("JAILED: %s with %.2f points. Repeated Violation: x%d multiplier \n", ip, points, RepeatViolations[ip])
+		voidlog.Log("IP %s was already added. Increasing score to %.2f points. \n", ip, points)
 	}
 
-	//add to history
-	JailHistory.Value = time.Now().Format(time.Stamp) + " : " + ip
-	JailHistory = JailHistory.Next()
+	//set jail time
+	jailTimes[ip] = time.Now()
 
 	lock.Lock()
 	defer lock.Unlock()
 	Ip_list[ip] = points
+
 }
 
 func decreaseJailTime() {
