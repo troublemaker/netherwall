@@ -286,8 +286,7 @@ func webserver() {
 func onShutDown() {
 	if _, err := os.Stat(statedir); os.IsNotExist(err) {
 		os.MkdirAll(statedir, 0755)
-	}
-	return 
+	} 
 
 	file, err := os.Create(statedir + "/watchlist")
 	if err != nil {
