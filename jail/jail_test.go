@@ -9,22 +9,31 @@ import (
 	"time"
 )
 
+
+
 type mockFireWall struct {
 	blockedIPs map[string]struct{}
 }
 
 func (mf *mockFireWall) AppendUnique(table, chain string, rulespec ...string) error {
-	fmt.Printf("IPTables (test):  Add IP: %s \n", rulespec[1])
+	fmt.Printf("IPTables (test):  -AppendUnique: %s \n", rulespec[1])
 	mf.blockedIPs[rulespec[1]] = x
 	return nil
 }
 
 func (mf *mockFireWall) Delete(table, chain string, rulespec ...string) error {
-	fmt.Printf("IPTables (test):  Remove IP: %s \n", rulespec[1])
+	fmt.Printf("IPTables (test):  -Delete: %s \n", rulespec[1])
 	delete(mf.blockedIPs, rulespec[1])
 	fmt.Printf("IPTables (test):  blocked IPs list len: %d \n", len(mf.blockedIPs))
 	return nil
 }
+
+func (mf *mockFireWall) ClearChain(table, chain string) error {
+	fmt.Printf("IPTables (test):  -ClearChain \n")
+	mf.blockedIPs = make(map[string]struct{})
+	return nil
+}
+
 
 func newMockFireWall() *mockFireWall {
 	mf := new(mockFireWall)
@@ -32,11 +41,14 @@ func newMockFireWall() *mockFireWall {
 	return mf
 }
 
-//override default periods
+
 func init() {
+	//override default periods
+	schedulerSleep = time.Millisecond * 100
+
 	ipt = newMockFireWall()
 	Setup(ipt)
-	schedulerSleep = time.Millisecond * 100
+
 }
 
 func TestJail(t *testing.T) {
@@ -45,17 +57,19 @@ func TestJail(t *testing.T) {
 	BlockIP("1.1.1.1", 100)
 	iter := 0
 	for iter < 4 {
-		BlockIP(randIpV4(), 15)
+		ip := randIpV4()
+		BlockIP(ip, 15)
+		BlockIP(ip, 20)
 		time.Sleep(time.Millisecond * 150)
 		iter++
 	}
-	n := len(ip_list)
+	n := len(Ip_list)
 	if n != 4 {
-		t.Fatalf("expected 5 elements, got %d \n", n)
+		t.Fatalf("expected 4 elements, got %d \n", n)
 	}
-	time.Sleep(time.Second * 3)
+	time.Sleep(time.Second * 5)
 
-	n = len(ip_list)
+	n = len(Ip_list)
 	if n != 0 {
 		t.Fatalf("expected 0 elements, got %d \n", n)
 	}

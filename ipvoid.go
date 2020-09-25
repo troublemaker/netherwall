@@ -51,7 +51,6 @@ var watchlist map[string]float32
 var config Configuration
 var decPerCycle float32 = 0.05
 
-const chain string = "ipvoid"
 const statedir string = "state"
 
 //TODO clear Jail on shutdown
@@ -146,7 +145,7 @@ func initJail() {
 		os.Exit(1)
 	}
 
-	err = jail.Setup(ipt, chain)
+	err = jail.Setup(ipt)
 	if err != nil {
 		fmt.Printf("IPtables setup issue: %v", err)
 		os.Exit(1)
@@ -290,7 +289,7 @@ func onShutDown() {
 	}
 	return 
 
-	file, err := os.Create("watchlist")
+	file, err := os.Create(statedir + "/watchlist")
 	if err != nil {
 		log.Println("Couldn't save state: File create failed. " + err.Error())
 		return

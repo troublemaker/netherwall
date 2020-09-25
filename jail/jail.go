@@ -16,6 +16,9 @@ type iptablesImp interface {
 	ClearChain(table, chain string) error
 }
 
+const chain string = "ipvoid"
+
+
 var x struct{} //empty value
 var ipt iptablesImp
 
@@ -28,7 +31,8 @@ var jailTimes map[string]time.Time
 var lock = sync.RWMutex{}
 var schedulerSleep = time.Minute
 var decJailedPerCycle float32 = 1
-var chain = ""
+
+
 
 func init() {
 	Ip_list = make(map[string]float32, 1024)
@@ -38,25 +42,24 @@ func init() {
 	jailTimes = make(map[string]time.Time, 1024)
 
 	whitelist["127.0.0.1"] = x
-	go scheduledRemoval()
-
 }
 
-func Setup(iptimp iptablesImp, chainname string) error {
+func Setup(iptimp iptablesImp) error {
 	ipt = iptimp
-	chain = chainname
 
 	err := ipt.ClearChain("filter", chain)
 	if err != nil {
-		fmt.Printf("IPtables clear chain issue: %v", err)
+		fmt.Printf("IPtables clear chain issue: %v \n", err)
 		return err
 	}
 
 	err = ipt.AppendUnique("filter", "INPUT", "-j", chain)
 	if err != nil {
-		fmt.Printf("IPtables attach chain issue: %v", err)
+		fmt.Printf("IPtables attach chain issue: %v \n", err)
 		return err
 	}
+
+	go scheduledRemoval()
 	return nil
 }
 
@@ -68,7 +71,7 @@ func AppendWhitelist(ip string) {
 		return
 	}
 	whitelist[ip] = x
-	voidlog.Log("IP added to whitelist: " + ip)
+	voidlog.Log("IP added to whitelist: %s \n", ip)
 
 }
 
@@ -83,7 +86,7 @@ func BlockIP(ip string, points float32) error {
 	//check whitelist
 	_, ok := whitelist[ip]
 	if ok {
-		voidlog.Log("BlockIP. IP not blocked (exists in whitelist): " + ip)
+		voidlog.Log("BlockIP. IP not blocked (exists in whitelist): %s \n", ip)
 		return nil
 	}
 	addIP(ip, points)
@@ -95,12 +98,17 @@ func addIP(ip string, points float32) {
 	//were added in the watched file at the same time. 
 
 	t,ok := jailTimes[ip]
-	if !(ok && time.Now().Sub(t).Seconds() > 10) {
 
-		//wasn't recently added
+	if ok {
+		fmt.Printf (" ---- %f \n", time.Now().Sub(t).Seconds())
+	}
+
+	if !ok || (time.Now().Sub(t).Seconds() > 10) {
+
+		//wasn't recently added (or at all)
 		err := ipt.AppendUnique("filter", chain, "-s", ip, "-j", "DROP")
 		if err != nil {
-			voidlog.Log("Adding IP to iptables failed: %v", err)
+			voidlog.Log("Adding IP to iptables failed: %v \n", err)
 			return
 		}
 
@@ -140,7 +148,7 @@ func decreaseJailTime() {
 		if Ip_list[k] <= 0 {
 			err := ipt.Delete("filter", chain, "-s", k, "-j", "DROP")
 			if err != nil {
-				voidlog.Log("Delete IP from iptables failed: %v", err)
+				voidlog.Log("Delete IP from iptables failed: %v \n", err)
 			}
 			delete(Ip_list, k)
 			voidlog.Log("Removing IP: %s \n", k)
@@ -149,7 +157,7 @@ func decreaseJailTime() {
 
 }
 
-func scheduledRemoval() {
+func scheduledRemoval() { 
 	for {
 		time.Sleep(schedulerSleep)
 		decreaseJailTime()
