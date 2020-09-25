@@ -63,6 +63,13 @@ func Setup(iptimp iptablesImp) error {
 	return nil
 }
 
+func ClearJail() {
+	err := ipt.ClearChain("filter", chain)
+	if err != nil {
+		fmt.Printf("IPtables clear chain issue: %v \n", err)
+	}
+}
+
 //TODO add CIDR support
 func AppendWhitelist(ip string) {
 	res := net.ParseIP(ip)

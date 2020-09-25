@@ -284,6 +284,8 @@ func webserver() {
 
 
 func onShutDown() {
+	jail.ClearJail()
+	
 	if _, err := os.Stat(statedir); os.IsNotExist(err) {
 		os.MkdirAll(statedir, 0755)
 	} 
