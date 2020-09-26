@@ -312,7 +312,7 @@ func loadState() {
 	}
 	defer file.Close()
 	decoder := gob.NewDecoder(file)
-	err = decoder.Decode(watchlist)
+	err = decoder.Decode(&watchlist)
 	if err != nil {
 		log.Println("Couldn't load state " + err.Error())
 	} else {
