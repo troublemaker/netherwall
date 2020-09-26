@@ -10,6 +10,7 @@ import (
 )
 
 
+var x struct{} 
 
 type mockFireWall struct {
 	blockedIPs map[string]struct{}

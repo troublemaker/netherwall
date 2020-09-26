@@ -18,14 +18,11 @@ type iptablesImp interface {
 
 const chain string = "ipvoid"
 
-
-var x struct{} //empty value
 var ipt iptablesImp
 
 var Ip_list map[string]float32
 var RepeatViolations map[string]int
 var JailHistory *ring.Ring
-//var whitelist map[string]struct{}
 var whitelist []*net.IPNet
 var jailTimes map[string]time.Time
 
@@ -39,7 +36,6 @@ func init() {
 	Ip_list = make(map[string]float32, 1024)
 	RepeatViolations = make(map[string]int, 1024)
 	JailHistory = ring.New(1024)
-	//whitelist = make(map[string]struct{}, 100)
 	whitelist = make([]*net.IPNet, 0, 100)
 	jailTimes = make(map[string]time.Time, 1024)
 

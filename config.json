@@ -3,6 +3,7 @@
     "IpRegEx": "^(?:[0-9]{1,3}\\.){3}[0-9]{1,3}\\b",
     "RulesFile": "rules.txt",
     "IPWhitelist": "whitelist.txt",
-    "BanThreshold": 100
+    "BanThreshold": 100,
+    "DecreasePerMinute": 0.05
 }
 
