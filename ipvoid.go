@@ -69,7 +69,7 @@ func main() {
 	}
 
 
-
+	loadState()
 	go webserver()
 	terminate := make(chan os.Signal, 1)
 	signal.Notify(terminate, syscall.SIGTERM, syscall.SIGINT, syscall.SIGQUIT)
