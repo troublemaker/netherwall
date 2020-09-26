@@ -53,7 +53,8 @@ func init() {
 
 func TestJail(t *testing.T) {
 	rand.Seed(time.Now().UnixNano())
-	AppendWhitelist("1.1.1.1")
+	AppendWhitelist("1.1.1.1/24")
+	AppendWhitelist("2.1.1.1/24")
 	BlockIP("1.1.1.1", 100)
 	iter := 0
 	for iter < 4 {

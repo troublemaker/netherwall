@@ -25,7 +25,8 @@ var ipt iptablesImp
 var Ip_list map[string]float32
 var RepeatViolations map[string]int
 var JailHistory *ring.Ring
-var whitelist map[string]struct{}
+//var whitelist map[string]struct{}
+var whitelist []*net.IPNet
 var jailTimes map[string]time.Time
 
 var lock = sync.RWMutex{}
@@ -38,10 +39,11 @@ func init() {
 	Ip_list = make(map[string]float32, 1024)
 	RepeatViolations = make(map[string]int, 1024)
 	JailHistory = ring.New(1024)
-	whitelist = make(map[string]struct{}, 100)
+	//whitelist = make(map[string]struct{}, 100)
+	whitelist = make([]*net.IPNet, 0, 100)
 	jailTimes = make(map[string]time.Time, 1024)
 
-	whitelist["127.0.0.1"] = x
+	AppendWhitelist("127.0.0.1/32")
 }
 
 func Setup(iptimp iptablesImp) error {
@@ -71,31 +73,32 @@ func ClearJail() {
 	}
 }
 
-//TODO add CIDR support
-func AppendWhitelist(ip string) {
-	res := net.ParseIP(ip)
-	if res == nil {
-		fmt.Printf("Whitelist: parameter is not an IP: %s \n", ip)
+func AppendWhitelist(cidr string) {
+	_, ipnet, err := net.ParseCIDR(cidr)
+	if err != nil {
+		fmt.Printf("Whitelist: parameter is not in a CIDR notation: %s \n", cidr)
 		return
 	}
-	whitelist[ip] = x
-	voidlog.Log("IP added to whitelist: %s \n", ip)
+
+	whitelist = append(whitelist, ipnet)
+	voidlog.Log("IP net added to whitelist: %s \n", cidr)
 
 }
 
 func BlockIP(ip string, points float32) error {
 
-	//todo IP4 only
+	//todo: add IP6
 	res := net.ParseIP(ip)
 	if res == nil {
 		return errors.New("Parameter is not an IP")
 	}
 
 	//check whitelist
-	_, ok := whitelist[ip]
-	if ok {
-		voidlog.Log("BlockIP. IP not blocked (exists in whitelist): %s \n", ip)
-		return nil
+	for _, net := range whitelist {
+		if net.Contains(res) {
+			voidlog.Log("BlockIP. IP not blocked (exists in whitelist): %s \n", ip)
+			return nil
+		}
 	}
 	addIP(ip, points)
 	return nil

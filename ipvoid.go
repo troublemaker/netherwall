@@ -53,7 +53,7 @@ var decPerCycle float32 = 0.05
 
 const statedir string = "state"
 
-//TODO clear Jail on shutdown
+
 func main() {
 
 	initConfig()
