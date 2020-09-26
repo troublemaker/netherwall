@@ -319,4 +319,9 @@ func loadState() {
 		log.Println("State loaded")
 	}
 	
+	for ip, v := range watchlist {
+		if v >= float32(config.BanThreshold) {
+			jail.BlockIP(ip, v)
+		}
+	}
 }
