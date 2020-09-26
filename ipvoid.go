@@ -285,7 +285,11 @@ func webserver() {
 
 func onShutDown() {
 	jail.ClearJail()
-	
+	storeState()
+}
+
+
+func storeState() {
 	if _, err := os.Stat(statedir); os.IsNotExist(err) {
 		os.MkdirAll(statedir, 0755)
 	} 
@@ -298,4 +302,21 @@ func onShutDown() {
 	encoder := gob.NewEncoder(file)
 	encoder.Encode(watchlist)
 	file.Close()
+}
+
+
+func loadState() {
+	file, err := os.Open(statedir + "/watchlist")
+	if err != nil {
+		return
+	}
+	defer file.Close()
+	decoder := gob.NewDecoder(file)
+	err = decoder.Decode(watchlist)
+	if err != nil {
+		log.Println("Couldn't load state " + err.Error())
+	} else {
+		log.Println("State loaded")
+	}
+	
 }

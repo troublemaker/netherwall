@@ -64,6 +64,7 @@ func Setup(iptimp iptablesImp) error {
 }
 
 func ClearJail() {
+	fmt.Printf("IPtables chain cleared \n")
 	err := ipt.ClearChain("filter", chain)
 	if err != nil {
 		fmt.Printf("IPtables clear chain issue: %v \n", err)
