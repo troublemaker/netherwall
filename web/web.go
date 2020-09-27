@@ -2,12 +2,12 @@ package web
 
 import (
 	"html/template"
-	"ipvoid/voidlog"
-	"net/http"
-	"sort"
 	"ipvoid/jail"
 	"ipvoid/resolver"
+	"ipvoid/voidlog"
 	"ipvoid/watch"
+	"net/http"
+	"sort"
 )
 
 type StatPageData struct {
@@ -23,7 +23,6 @@ type stat struct {
 	Host  string
 }
 
-
 func init() {
 
 }
@@ -35,7 +34,6 @@ func Webserver() {
 	http.HandleFunc("/stats", statsPage)
 	http.ListenAndServe(":9900", nil)
 }
-
 
 func statsPage(w http.ResponseWriter, r *http.Request) {
 	data := StatPageData{}
@@ -92,4 +90,4 @@ func statsPage(w http.ResponseWriter, r *http.Request) {
 	data.History = stathistory
 	data.Log = log
 	tmpl.Execute(w, data)
-	}
+}

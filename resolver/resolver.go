@@ -24,7 +24,7 @@ func Lookup(ip string) (names string) {
 	} else {
 		res = strings.Join(addr[:], ";")
 	}
-	
+
 	res_cache[ip] = res
 	return res
 }

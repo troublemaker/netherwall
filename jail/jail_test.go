@@ -9,8 +9,7 @@ import (
 	"time"
 )
 
-
-var x struct{} 
+var x struct{}
 
 type mockFireWall struct {
 	blockedIPs map[string]struct{}
@@ -35,13 +34,11 @@ func (mf *mockFireWall) ClearChain(table, chain string) error {
 	return nil
 }
 
-
 func newMockFireWall() *mockFireWall {
 	mf := new(mockFireWall)
 	mf.blockedIPs = make(map[string]struct{})
 	return mf
 }
-
 
 func init() {
 	//override default periods

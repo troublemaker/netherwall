@@ -1,15 +1,14 @@
 package config
 
 import (
-	"testing"
 	"fmt"
+	"testing"
 )
 
-func init(){
+func init() {
 
-configFile = "testconf.json"
+	configFile = "testconf.json"
 }
-
 
 func TestConf(t *testing.T) {
 	err := Setup()

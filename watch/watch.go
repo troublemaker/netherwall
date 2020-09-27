@@ -1,25 +1,23 @@
 package watch
 
 import (
+	"encoding/gob"
+	"fmt"
 	"ipvoid/config"
-	"ipvoid/voidlog"
+	"ipvoid/filemonitor"
 	"ipvoid/jail"
 	"ipvoid/resolver"
-	"ipvoid/filemonitor"
-	"encoding/gob"
-	"regexp"
-	"time"
-	"fmt"
+	"ipvoid/voidlog"
 	"log"
 	"os"
+	"regexp"
+	"time"
 )
 
 var fm *filemonitor.FileMonitor
 var Watchlist map[string]float32
-var decPerCycle float32 = 0.05
 
 const statedir string = "state"
-
 
 func Run() {
 	Watchlist = make(map[string]float32, 1000)
@@ -43,7 +41,6 @@ func Run() {
 				if r.MatchString(line) {
 					ip := rIP.FindString(line)
 					Watchlist[ip] += float32(v)
-					//fmt.Printf("%.2f | " + line, Watchlist[ip])
 					voidlog.Log("%.2f | "+line, Watchlist[ip])
 					resolver.Lookup(ip)
 					if Watchlist[ip] >= float32(config.Data.BanThreshold) {
@@ -54,18 +51,16 @@ func Run() {
 			}
 
 		case err := <-fc.Cerr:
-			//fmt.Println(err)
 			voidlog.Log(err)
 			return
 
 		case <-timer.C:
 			for k, v := range Watchlist {
-				Watchlist[k] = v - decPerCycle
-				//fmt.Printf("IP Score status: %s : %.2f \n", k, Watchlist[k])
+				Watchlist[k] = v - config.Data.DecreasePerMinute
+				//log.Printf("IP Score status: %s : %.2f \n", k, Watchlist[k])
 
 				if Watchlist[k] <= 0 {
 					delete(Watchlist, k)
-					//fmt.Printf("Removing IP: %s \n", k)
 					voidlog.Log("Removing IP: %s \n", k)
 				}
 			}
@@ -73,11 +68,10 @@ func Run() {
 	}
 }
 
-
 func StoreState() {
 	if _, err := os.Stat(statedir); os.IsNotExist(err) {
 		os.MkdirAll(statedir, 0755)
-	} 
+	}
 
 	file, err := os.Create(statedir + "/watchlist")
 	if err != nil {
@@ -88,7 +82,6 @@ func StoreState() {
 	encoder.Encode(Watchlist)
 	file.Close()
 }
-
 
 func loadState() {
 	file, err := os.Open(statedir + "/watchlist")
@@ -103,11 +96,10 @@ func loadState() {
 	} else {
 		log.Println("State loaded")
 	}
-	
+
 	for ip, v := range Watchlist {
 		if v >= float32(config.Data.BanThreshold) {
 			jail.BlockIP(ip, v)
 		}
 	}
 }
-

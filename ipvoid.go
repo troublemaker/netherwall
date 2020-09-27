@@ -1,18 +1,16 @@
 package main
 
 import (
-	"log"
 	"github.com/coreos/go-iptables/iptables"
-	"ipvoid/jail"
-	"ipvoid/web"
-	"ipvoid/watch"
 	"ipvoid/config"
+	"ipvoid/jail"
+	"ipvoid/watch"
+	"ipvoid/web"
+	"log"
 	"os"
 	"os/signal"
 	"syscall"
 )
-
-
 
 func main() {
 
@@ -22,7 +20,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	//Init IP Tables interface lib
+	//Init IP Tables interface
 	ipt, err := iptables.New()
 	if err != nil {
 		log.Printf("IPtables init issue: %s \n", err.Error())
@@ -38,28 +36,18 @@ func main() {
 	//Launch main watcher loop
 	go watch.Run()
 
-	//Launch webserver 
+	//Launch webserver
 	go web.Webserver()
 
 	//graceful shutdown
 	terminate := make(chan os.Signal, 1)
 	signal.Notify(terminate, syscall.SIGTERM, syscall.SIGINT, syscall.SIGQUIT)
 
- 	<-terminate
+	<-terminate
 	log.Println("Shutting down")
 
 	jail.ClearJail()
 	watch.StoreState()
 
 	os.Exit(0)
-
 }
-
-
-
-
-
-
-
-
-

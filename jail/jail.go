@@ -4,8 +4,8 @@ import (
 	"container/ring"
 	"errors"
 	"fmt"
-	"ipvoid/voidlog"
 	"ipvoid/config"
+	"ipvoid/voidlog"
 	"net"
 	"sync"
 	"time"
@@ -30,8 +30,6 @@ var jailTimes map[string]time.Time
 var lock = sync.RWMutex{}
 var schedulerSleep = time.Minute
 var decJailedPerCycle float32 = 1
-
-
 
 func init() {
 	Ip_list = make(map[string]float32, 1024)
@@ -60,7 +58,7 @@ func Setup(iptimp iptablesImp) error {
 		AppendWhitelist(cidr)
 	}
 	AppendWhitelist("127.0.0.1/32")
-	
+
 	go scheduledRemoval()
 	return nil
 }
@@ -105,13 +103,13 @@ func BlockIP(ip string, points float32) error {
 }
 
 func addIP(ip string, points float32) {
-	//test if IP was just added.  This can happen when several matching entries 
-	//were added in the watched file at the same time. 
+	//test if IP was just added.  This can happen when several matching entries
+	//were added in the watched file at the same time.
 
-	t,ok := jailTimes[ip]
+	t, ok := jailTimes[ip]
 
 	if ok {
-		fmt.Printf (" ---- %f \n", time.Now().Sub(t).Seconds())
+		fmt.Printf(" ---- %f \n", time.Now().Sub(t).Seconds())
 	}
 
 	if !ok || (time.Now().Sub(t).Seconds() > 10) {
@@ -168,7 +166,7 @@ func decreaseJailTime() {
 
 }
 
-func scheduledRemoval() { 
+func scheduledRemoval() {
 	for {
 		time.Sleep(schedulerSleep)
 		decreaseJailTime()

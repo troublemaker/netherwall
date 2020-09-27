@@ -2,25 +2,24 @@ package config
 
 import (
 	"bufio"
-	"regexp"
 	"encoding/json"
-	"os"
-	"log"
 	"io"
+	"log"
+	"os"
+	"regexp"
 	"strconv"
 	"strings"
 )
 
-
 type Configuration struct {
-	LogFile      string
-	IpRegEx      string
-	RulesFile    string
-	BanThreshold int
+	LogFile           string
+	IpRegEx           string
+	RulesFile         string
+	BanThreshold      int
 	DecreasePerMinute float32
-	IPWhitelist  string
-	CIDRWhitelist []string
-	Rules        map[*regexp.Regexp]int
+	IPWhitelist       string
+	CIDRWhitelist     []string
+	Rules             map[*regexp.Regexp]int
 }
 
 var Data Configuration = Configuration{}
@@ -36,17 +35,15 @@ func Setup() error {
 	if err != nil {
 		return err
 	}
-	//log.Println(Data)
 
 	//init rules
-	Data.Rules = make(map[*regexp.Regexp]int, 10) 
+	Data.Rules = make(map[*regexp.Regexp]int, 10)
 
 	//read rules
-	err = readRules(Data.RulesFile, Data.Rules)       
+	err = readRules(Data.RulesFile, Data.Rules)
 	if err != nil {
 		return err
 	}
-	//readWhitelist(Data.IPWhitelist)
 
 	return nil
 }
@@ -96,28 +93,3 @@ func readRules(path string, rules map[*regexp.Regexp]int) error {
 
 	return nil
 }
-
-
-// func readWhitelist(path string) {
-// 	file, _ := os.Open(path)
-// 	reader := bufio.NewReader(file)
-// 	lineN := 0
-// 	eof := false
-// 	for !eof {
-// 		lineN++
-// 		bytes, err := reader.ReadBytes('\n')
-// 		if err != nil && err != io.EOF {
-// 			fmt.Println("whilelist file read error:", err)
-// 			return
-// 		}
-// 		if err == io.EOF {
-// 			eof = true
-// 			continue
-// 		}
-
-// 		line := string(bytes[:len(bytes)-1])
-// 		jail.AppendWhitelist(line)
-
-// 	}
-// }
-
