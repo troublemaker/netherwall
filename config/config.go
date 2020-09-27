@@ -5,7 +5,7 @@ import (
 	"regexp"
 	"encoding/json"
 	"os"
-	"fmt"
+	"log"
 	"io"
 	"strconv"
 	"strings"
@@ -24,9 +24,10 @@ type Configuration struct {
 }
 
 var Data Configuration = Configuration{}
+var configFile = "config.json"
 
 func Setup() error {
-	conf, err := os.Open("config.json")
+	conf, err := os.Open(configFile)
 	if err != nil {
 		return err
 	}
@@ -35,16 +36,22 @@ func Setup() error {
 	if err != nil {
 		return err
 	}
-	fmt.Println(Data)
+	//log.Println(Data)
 
-	Data.Rules = make(map[*regexp.Regexp]int, 10) //init rules
-	readRules(Data.RulesFile, Data.Rules)       //read rules
+	//init rules
+	Data.Rules = make(map[*regexp.Regexp]int, 10) 
+
+	//read rules
+	err = readRules(Data.RulesFile, Data.Rules)       
+	if err != nil {
+		return err
+	}
 	//readWhitelist(Data.IPWhitelist)
 
 	return nil
 }
 
-func readRules(path string, rules map[*regexp.Regexp]int) {
+func readRules(path string, rules map[*regexp.Regexp]int) error {
 	file, _ := os.Open(path)
 	reader := bufio.NewReader(file)
 	lineN := 0
@@ -53,8 +60,7 @@ func readRules(path string, rules map[*regexp.Regexp]int) {
 		lineN++
 		bytes, err := reader.ReadBytes('\n')
 		if err != nil && err != io.EOF {
-			fmt.Println("rules file read error:", err)
-			return
+			return err
 		}
 		if err == io.EOF {
 			eof = true
@@ -70,23 +76,25 @@ func readRules(path string, rules map[*regexp.Regexp]int) {
 
 			points, err := strconv.Atoi(pointsString)
 			if err != nil {
-				fmt.Println("Rules error: Points is not integer. line:", lineN)
-				return
+				log.Println("Rules error: Points is not integer. line:", lineN)
+				return err
 			}
 
 			r, err := regexp.Compile(rule)
 			if err != nil {
-				fmt.Println("Rules error: Bad regexp. Line: ", lineN)
-				return
+				log.Println("Rules error: Bad regexp. Line: ", lineN)
+				return err
 			}
 
 			rules[r] = points
 
 		} else {
-			fmt.Println("Rules error: No delimiter. line:", lineN)
-			return
+			log.Println("Rules error: No delimiter. line:", lineN)
+			return err
 		}
 	}
+
+	return nil
 }
 
 

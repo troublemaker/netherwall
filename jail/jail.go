@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"ipvoid/voidlog"
+	"ipvoid/config"
 	"net"
 	"sync"
 	"time"
@@ -38,8 +39,6 @@ func init() {
 	JailHistory = ring.New(1024)
 	whitelist = make([]*net.IPNet, 0, 100)
 	jailTimes = make(map[string]time.Time, 1024)
-
-	AppendWhitelist("127.0.0.1/32")
 }
 
 func Setup(iptimp iptablesImp) error {
@@ -57,6 +56,11 @@ func Setup(iptimp iptablesImp) error {
 		return err
 	}
 
+	for _, cidr := range config.Data.CIDRWhitelist {
+		AppendWhitelist(cidr)
+	}
+	AppendWhitelist("127.0.0.1/32")
+	
 	go scheduledRemoval()
 	return nil
 }
