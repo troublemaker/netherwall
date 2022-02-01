@@ -79,7 +79,7 @@ func AppendWhitelist(cidr string) {
 	}
 
 	whitelist = append(whitelist, ipnet)
-	voidlog.Log("IP net added to whitelist: %s \n", cidr)
+	voidlog.Logf("IP net added to whitelist: %s \n", cidr)
 
 }
 
@@ -94,7 +94,7 @@ func BlockIP(ip string, points float32) error {
 	//check whitelist
 	for _, net := range whitelist {
 		if net.Contains(res) {
-			voidlog.Log("BlockIP. IP not blocked (exists in whitelist): %s \n", ip)
+			voidlog.Logf("BlockIP. IP not blocked (exists in whitelist): %s \n", ip)
 			return nil
 		}
 	}
@@ -117,25 +117,25 @@ func addIP(ip string, points float32) {
 		//wasn't recently added (or at all)
 		err := ipt.AppendUnique("filter", chain, "-s", ip, "-j", "DROP")
 		if err != nil {
-			voidlog.Log("Adding IP to iptables failed: %v \n", err)
+			voidlog.Logf("Adding IP to iptables failed: %v \n", err)
 			return
 		}
 
 		_, ok := RepeatViolations[ip]
 		if !ok {
-			voidlog.Log("JAILED: %s with %.2f points. \n", ip, points)
+			voidlog.Logf("JAILED: %s with %.2f points. \n", ip, points)
 			RepeatViolations[ip] = 1
 		} else {
 			RepeatViolations[ip]++
 			points = points * float32(RepeatViolations[ip])
-			voidlog.Log("JAILED: %s with %.2f points. Repeated Violation: x%d multiplier \n", ip, points, RepeatViolations[ip])
+			voidlog.Logf("JAILED: %s with %.2f points. Repeated Violation: x%d multiplier \n", ip, points, RepeatViolations[ip])
 		}
 
 		//add to history
 		JailHistory.Value = time.Now().Format(time.Stamp) + " : " + ip
 		JailHistory = JailHistory.Next()
 	} else {
-		voidlog.Log("IP %s was already added. Increasing score to %.2f points. \n", ip, points)
+		voidlog.Logf("IP %s was already added. Increasing score to %.2f points. \n", ip, points)
 	}
 
 	//set jail time
@@ -157,10 +157,10 @@ func decreaseJailTime() {
 		if Ip_list[k] <= 0 {
 			err := ipt.Delete("filter", chain, "-s", k, "-j", "DROP")
 			if err != nil {
-				voidlog.Log("Delete IP from iptables failed: %v \n", err)
+				voidlog.Logf("Delete IP from iptables failed: %v \n", err)
 			}
 			delete(Ip_list, k)
-			voidlog.Log("Removing IP: %s \n", k)
+			voidlog.Logf("Removing IP: %s \n", k)
 		}
 	}
 
