@@ -41,7 +41,7 @@ func Run() {
 				if r.MatchString(line) {
 					ip := rIP.FindString(line)
 					Watchlist[ip] += float32(v)
-					voidlog.Log("%.2f | "+line, Watchlist[ip])
+					voidlog.Log(fmt.Sprintf("%.2f | ", Watchlist[ip]) + line)
 					resolver.Lookup(ip)
 					if Watchlist[ip] >= float32(config.Data.BanThreshold) {
 						jail.BlockIP(ip, Watchlist[ip])
@@ -61,7 +61,7 @@ func Run() {
 
 				if Watchlist[k] <= 0 {
 					delete(Watchlist, k)
-					voidlog.Log("Removing IP: %s \n", k)
+					voidlog.Logf("Removing IP: %s \n", k)
 				}
 			}
 		}
