@@ -4,6 +4,12 @@
     "RulesFile": "rules.txt",
     "BanThreshold": 100,
     "DecreasePerMinute": 0.05,
-    "CIDRWhitelist": ["1.1.1.1/32", "2.2.2.2/24"]
+    "CIDRWhitelist": ["1.1.1.1/32", "2.2.2.2/24"],
+    "UseProxyDetection": true,
+    "ProxyCSV": "IP2PROXY-IP-COUNTRY.CSV",
+    "ProxyScoreMultiplier": 2,
+    "ProxyCountryScoreMultiplier": 2,
+    "ProxyCountriesList": ["US", "CA"],
+    "ProxyCountriesListModeWhitelist": true
 }
 

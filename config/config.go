@@ -12,14 +12,20 @@ import (
 )
 
 type Configuration struct {
-	LogFile           string
-	IpRegEx           string
-	RulesFile         string
-	BanThreshold      int
-	DecreasePerMinute float32
-	IPWhitelist       string
-	CIDRWhitelist     []string
-	Rules             map[*regexp.Regexp]int
+	LogFile                         string
+	IpRegEx                         string
+	RulesFile                       string
+	BanThreshold                    int
+	DecreasePerMinute               float32
+	IPWhitelist                     string
+	CIDRWhitelist                   []string
+	Rules                           map[*regexp.Regexp]int
+	UseProxyDetection               bool
+	ProxyCSV                        string
+	ProxyScoreMultiplier            int
+	ProxyCountryScoreMultiplier     int
+	ProxyCountriesList              []string
+	ProxyCountriesListModeWhitelist bool
 }
 
 var Data Configuration = Configuration{}

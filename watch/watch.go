@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"ipvoid/config"
 	"ipvoid/filemonitor"
+	"ipvoid/ipdb"
 	"ipvoid/jail"
 	"ipvoid/resolver"
 	"ipvoid/voidlog"
@@ -15,7 +16,8 @@ import (
 )
 
 var fm *filemonitor.FileMonitor
-var Watchlist map[string]float32
+var Watchlist map[string]float32 //TODO: possible RC
+var proxyDB *ipdb.IPDataBase
 
 const statedir string = "state"
 
@@ -28,7 +30,7 @@ func Run() {
 	fm = filemonitor.NewFileMonitor()
 	fc, err := fm.AddFile(config.Data.LogFile)
 	if err != nil {
-		fmt.Println(err.Error())
+		log.Println(err.Error())
 		return
 	}
 
@@ -39,10 +41,46 @@ func Run() {
 		case line := <-fc.Cout:
 			for r, v := range config.Data.Rules {
 				if r.MatchString(line) {
+					//TODO: validate IP
 					ip := rIP.FindString(line)
+
+					multiplyFactorsLog := ""
+					//check ProxyDB
+					if proxyDB != nil && proxyDB.Loaded {
+						_, ipRange := proxyDB.CheckIP(ip)
+
+						if ipRange != nil {
+							//multiply for proxy match
+							v = v * config.Data.ProxyScoreMultiplier
+							multiplyFactorsLog = fmt.Sprintf("PROXY[x%d] ", config.Data.ProxyScoreMultiplier)
+
+							//check if we have a country match
+							countryMatched := false
+							for _, v := range config.Data.ProxyCountriesList {
+								if v == ipRange.CoutryCode {
+									countryMatched = true
+									break
+								}
+							}
+
+							if config.Data.ProxyCountriesListModeWhitelist {
+								if !countryMatched {
+									v = v * config.Data.ProxyCountryScoreMultiplier
+									multiplyFactorsLog = multiplyFactorsLog + fmt.Sprintf("%s[x%d] ", ipRange.CoutryCode, config.Data.ProxyCountryScoreMultiplier)
+								}
+							} else {
+								if countryMatched {
+									v = v * config.Data.ProxyCountryScoreMultiplier
+									multiplyFactorsLog = multiplyFactorsLog + fmt.Sprintf("%s[x%d] ", ipRange.CoutryCode, config.Data.ProxyCountryScoreMultiplier)
+								}
+							}
+						}
+					}
+
 					Watchlist[ip] += float32(v)
-					voidlog.Log(fmt.Sprintf("%.2f | ", Watchlist[ip]) + line)
+					voidlog.Log(fmt.Sprintf("%.2f | ", Watchlist[ip]) + multiplyFactorsLog + line)
 					resolver.Lookup(ip)
+
 					if Watchlist[ip] >= float32(config.Data.BanThreshold) {
 						jail.BlockIP(ip, Watchlist[ip])
 					}
@@ -102,4 +140,8 @@ func loadState() {
 			jail.BlockIP(ip, v)
 		}
 	}
+}
+
+func AddProxyDB(prDB *ipdb.IPDataBase) {
+	proxyDB = prDB
 }
