@@ -9,7 +9,7 @@ import (
 var LogHistory *ring.Ring
 
 func init() {
-	LogHistory = ring.New(1024)
+	LogHistory = ring.New(10240)
 }
 
 func Logf(format string, a ...interface{}) {

@@ -3,6 +3,7 @@ package main
 import (
 	"github.com/coreos/go-iptables/iptables"
 	"ipvoid/config"
+	"ipvoid/ipdb"
 	"ipvoid/jail"
 	"ipvoid/watch"
 	"ipvoid/web"
@@ -31,6 +32,18 @@ func main() {
 	if err != nil {
 		log.Printf("IPtables setup issue: %s \n", err.Error())
 		os.Exit(1)
+	}
+
+	if config.Data.UseProxyDetection {
+		err, ipProxy := ipdb.Create(config.Data.ProxyCSV)
+		if err != nil {
+			log.Printf("IPDB read issue: %s \n", err.Error())
+			os.Exit(1)
+		}
+
+		//add loaded proxy checker to watcher system
+		watch.AddProxyDB(ipProxy)
+
 	}
 
 	//Launch main watcher loop
