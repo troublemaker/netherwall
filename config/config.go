@@ -30,7 +30,7 @@ type Configuration struct {
 	GeoBlockCSV                        string
 	GeoBlockCountriesList              []string
 	GeoBlockCountriesListModeWhitelist bool
-	GeoBlockDuration				 int
+	GeoBlockDuration                   int
 }
 
 var Data Configuration = Configuration{}
