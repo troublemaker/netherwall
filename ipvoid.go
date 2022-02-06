@@ -46,6 +46,18 @@ func main() {
 
 	}
 
+	if config.Data.UseGEODetection {
+		err, ipGeo := ipdb.Create(config.Data.GeoBlockCSV)
+		if err != nil {
+			log.Printf("IPDB read issue: %s \n", err.Error())
+			os.Exit(1)
+		}
+
+		//add loaded proxy checker to watcher system
+		watch.AddGeoDB(ipGeo)
+
+	}
+
 	//Launch main watcher loop
 	go watch.Run()
 
