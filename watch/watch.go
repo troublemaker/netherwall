@@ -107,7 +107,7 @@ func Run() {
 
 						if (config.Data.GeoBlockCountriesListModeWhitelist && !countryMatched) || (!config.Data.GeoBlockCountriesListModeWhitelist && countryMatched) {
 							Watchlist[ip] += float32(config.Data.GeoBlockDuration)
-							voidlog.Log(fmt.Sprintf("%.2f | ", Watchlist[ip]) + fmt.Sprintf("%s GEO-BLOCK ", ipRange.CoutryCode) + line)
+							voidlog.Log(fmt.Sprintf("%.2f | ", Watchlist[ip]) + fmt.Sprintf("GEO-BLOCK[%s] ", ipRange.CoutryCode) + line)
 							jail.BlockIP(ip, Watchlist[ip])
 						}
 					}
