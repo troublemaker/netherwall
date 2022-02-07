@@ -16,8 +16,9 @@ import (
 )
 
 var fm *filemonitor.FileMonitor
-var Watchlist map[string]float32 //TODO: possible RC
+var Watchlist map[string]float32 //TODO: possible RC (from web module)
 var proxyDB *ipdb.IPDataBase
+var geoDB *ipdb.IPDataBase
 
 const statedir string = "state"
 
@@ -39,11 +40,12 @@ func Run() {
 	for {
 		select {
 		case line := <-fc.Cout:
+			//TODO: validate IP
+			ip := rIP.FindString(line)
+
+			//PROCESS HTTP REQUEST VS RULES
 			for r, v := range config.Data.Rules {
 				if r.MatchString(line) {
-					//TODO: validate IP
-					ip := rIP.FindString(line)
-
 					multiplyFactorsLog := ""
 					//check ProxyDB
 					if proxyDB != nil && proxyDB.Loaded {
@@ -85,6 +87,30 @@ func Run() {
 						jail.BlockIP(ip, Watchlist[ip])
 					}
 
+				}
+			}
+
+			//PROCESS IP ITSELF
+			if geoDB != nil && geoDB.Loaded {
+				_, ipRange := geoDB.CheckIP(ip)
+				if ipRange != nil {
+					if proxyDB != nil && proxyDB.Loaded {
+
+						//check if we have a country match
+						countryMatched := false
+						for _, v := range config.Data.GeoBlockCountriesList {
+							if v == ipRange.CoutryCode {
+								countryMatched = true
+								break
+							}
+						}
+
+						if (config.Data.GeoBlockCountriesListModeWhitelist && !countryMatched) || (!config.Data.GeoBlockCountriesListModeWhitelist && countryMatched) {
+							Watchlist[ip] += float32(config.Data.GeoBlockDuration)
+							voidlog.Log(fmt.Sprintf("%.2f | ", Watchlist[ip]) + fmt.Sprintf("GEO-BLOCK[%s] ", ipRange.CoutryCode) + line)
+							jail.BlockIP(ip, Watchlist[ip])
+						}
+					}
 				}
 			}
 
@@ -144,4 +170,8 @@ func loadState() {
 
 func AddProxyDB(prDB *ipdb.IPDataBase) {
 	proxyDB = prDB
+}
+
+func AddGeoDB(gDB *ipdb.IPDataBase) {
+	geoDB = gDB
 }

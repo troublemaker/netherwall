@@ -10,6 +10,11 @@
     "ProxyScoreMultiplier": 2,
     "ProxyCountryScoreMultiplier": 2,
     "ProxyCountriesList": ["US", "CA"],
-    "ProxyCountriesListModeWhitelist": true
+    "ProxyCountriesListModeWhitelist": true,
+    "UseGEODetection": true,
+	"GeoBlockCSV": "",                        
+	"GeoBlockCountriesList":[],              
+	"GeoBlockCountriesListModeWhitelist": false,
+	"GeoBlockDuration": 60
 }
 
